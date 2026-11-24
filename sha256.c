@@ -125,3 +125,11 @@ void sha256(const uint8_t *data, size_t len, uint8_t out[SHA256_DIGEST_SIZE])
     sha256_update(&ctx, data, len);
     sha256_final(&ctx, out);
 }
+
+void sha256d(const uint8_t *data, size_t len, uint8_t out[SHA256_DIGEST_SIZE])
+{
+    uint8_t inner[SHA256_DIGEST_SIZE];
+
+    sha256(data, len, inner);
+    sha256(inner, SHA256_DIGEST_SIZE, out);
+}

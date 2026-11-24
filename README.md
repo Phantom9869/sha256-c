@@ -25,4 +25,5 @@ edge.
 
 To use the hash in other code, include `sha256.h` and call `sha256()` for a
 single buffer, or `sha256_init` / `sha256_update` / `sha256_final` for
-streaming input.
+streaming input. `sha256d()` hashes the 32-byte digest a second time, the
+same way Bitcoin does for block hashes and transaction ids.

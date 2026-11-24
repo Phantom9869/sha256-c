@@ -67,6 +67,26 @@ int main(void)
     check("one million a", digest,
           "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0");
 
+    /* SHA-256d (hash the digest again) is what Bitcoin uses for block and tx ids. */
+    {
+        uint8_t d1[SHA256_DIGEST_SIZE], d2[SHA256_DIGEST_SIZE];
+        sha256((const uint8_t *)"abc", 3, d1);
+        sha256(d1, SHA256_DIGEST_SIZE, d2);
+        sha256d((const uint8_t *)"abc", 3, digest);
+        check("sha256d abc matches two sha256 calls", digest,
+              "4f8b42c22dd3729b519ba6f68d2da7cc5b2d606d05daed5ad5128cc03e6c6358");
+        if (memcmp(digest, d2, SHA256_DIGEST_SIZE) != 0) {
+            printf("FAIL  sha256d abc matches two sha256 calls (byte compare)\n");
+            failures++;
+        }
+    }
+    sha256d((const uint8_t *)"", 0, digest);
+    check("sha256d empty", digest,
+          "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456");
+    sha256d((const uint8_t *)"hello", 5, digest);
+    check("sha256d hello", digest,
+          "9595c9df90075148eb06860365df33584b75bff782a510c6cd4883a419833d50");
+
     if (failures) {
         printf("%d test(s) failed\n", failures);
         return EXIT_FAILURE;

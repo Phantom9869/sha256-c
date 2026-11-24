@@ -19,5 +19,6 @@ void sha256_update(sha256_ctx *ctx, const uint8_t *data, size_t len);
 void sha256_final(sha256_ctx *ctx, uint8_t out[SHA256_DIGEST_SIZE]);
 
 void sha256(const uint8_t *data, size_t len, uint8_t out[SHA256_DIGEST_SIZE]);
+void sha256d(const uint8_t *data, size_t len, uint8_t out[SHA256_DIGEST_SIZE]);
 
 #endif
