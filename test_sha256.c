@@ -87,6 +87,20 @@ int main(void)
     check("sha256d hello", digest,
           "9595c9df90075148eb06860365df33584b75bff782a510c6cd4883a419833d50");
 
+    sha256_init(&ctx);
+    sha256_update(&ctx, (const uint8_t *)"abc", 3);
+    sha256_final(&ctx, digest);
+    {
+        sha256_ctx zero;
+        memset(&zero, 0, sizeof(zero));
+        if (memcmp(&ctx, &zero, sizeof(ctx)) != 0) {
+            printf("FAIL  sha256_final wipes the context\n");
+            failures++;
+        } else {
+            printf("ok    sha256_final wipes the context\n");
+        }
+    }
+
     if (failures) {
         printf("%d test(s) failed\n", failures);
         return EXIT_FAILURE;

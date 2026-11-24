@@ -116,6 +116,12 @@ void sha256_final(sha256_ctx *ctx, uint8_t out[SHA256_DIGEST_SIZE])
         out[i * 4 + 2] = (uint8_t)(ctx->state[i] >> 8);
         out[i * 4 + 3] = (uint8_t)(ctx->state[i]);
     }
+
+    /* The context still holds the message and the digest. Clear it so a
+     * later sha256_final on the same pointer cannot reuse leftover state,
+     * and so the input is not left in memory longer than needed.
+     */
+    memset(ctx, 0, sizeof(*ctx));
 }
 
 void sha256(const uint8_t *data, size_t len, uint8_t out[SHA256_DIGEST_SIZE])
