@@ -15,6 +15,7 @@ test_sha256: test_sha256.o sha256.o
 test: test_sha256 sha256
 	./test_sha256
 	./compare.sh
+	./test_cli.sh
 
 clean:
 	rm -f *.o sha256 test_sha256

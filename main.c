@@ -1,8 +1,16 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "sha256.h"
+
+static void usage(FILE *fp)
+{
+    fprintf(fp, "Usage: sha256 [FILE...]\n");
+    fprintf(fp, "Print the SHA-256 digest of each FILE, or of standard input\n");
+    fprintf(fp, "if no files are given. A FILE of - means standard input.\n");
+}
 
 static int hash_stream(FILE *fp, uint8_t digest[SHA256_DIGEST_SIZE])
 {
@@ -27,11 +35,23 @@ static void print_digest(const uint8_t digest[SHA256_DIGEST_SIZE], const char *n
     printf("  %s\n", name);
 }
 
+static int is_help(const char *arg)
+{
+    return strcmp(arg, "-h") == 0 || strcmp(arg, "--help") == 0;
+}
+
 int main(int argc, char **argv)
 {
     uint8_t digest[SHA256_DIGEST_SIZE];
     int status = 0;
     int i;
+
+    for (i = 1; i < argc; i++) {
+        if (is_help(argv[i])) {
+            usage(stdout);
+            return 0;
+        }
+    }
 
     if (argc < 2) {
         if (hash_stream(stdin, digest) != 0) {
@@ -43,7 +63,18 @@ int main(int argc, char **argv)
     }
 
     for (i = 1; i < argc; i++) {
-        FILE *fp = strcmp(argv[i], "-") == 0 ? stdin : fopen(argv[i], "rb");
+        FILE *fp;
+        struct stat st;
+
+        if (strcmp(argv[i], "-") != 0) {
+            if (stat(argv[i], &st) == 0 && S_ISDIR(st.st_mode)) {
+                fprintf(stderr, "sha256: %s: Is a directory\n", argv[i]);
+                status = 1;
+                continue;
+            }
+        }
+
+        fp = strcmp(argv[i], "-") == 0 ? stdin : fopen(argv[i], "rb");
         if (!fp) {
             fprintf(stderr, "sha256: %s: %s\n", argv[i], strerror(errno));
             status = 1;

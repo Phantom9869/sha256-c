@@ -8,9 +8,12 @@ SHA-256 written from scratch in C99, following FIPS 180-4. No dependencies.
 make
 ./sha256 file.txt
 echo -n abc | ./sha256
+./sha256 --help
 ```
 
-Output matches the format of `sha256sum`.
+Output matches the format of `sha256sum`. Directories are refused with a
+clear error instead of being treated as empty input. `-h` and `--help`
+print a short usage message.
 
 ## Tests
 
