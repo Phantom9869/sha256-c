@@ -46,7 +46,10 @@ int main(int argc, char **argv)
     int status = 0;
     int i;
 
+    /* Options stop at --, so a file named --help can be hashed as: sha256 -- --help */
     for (i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--") == 0)
+            break;
         if (is_help(argv[i])) {
             usage(stdout);
             return 0;
@@ -62,9 +65,19 @@ int main(int argc, char **argv)
         return 0;
     }
 
+    {
+        int end_opts = 0;
+        int hashed = 0;
+
     for (i = 1; i < argc; i++) {
         FILE *fp;
         struct stat st;
+
+        if (!end_opts && strcmp(argv[i], "--") == 0) {
+            end_opts = 1;
+            continue;
+        }
+        hashed++;
 
         if (strcmp(argv[i], "-") != 0) {
             if (stat(argv[i], &st) == 0 && S_ISDIR(st.st_mode)) {
@@ -88,6 +101,16 @@ int main(int argc, char **argv)
         }
         if (fp != stdin)
             fclose(fp);
+    }
+
+        /* sha256 -- with no files after it reads standard input, like sha256sum. */
+        if (hashed == 0) {
+            if (hash_stream(stdin, digest) != 0) {
+                perror("stdin");
+                return 1;
+            }
+            print_digest(digest, "-");
+        }
     }
     return status;
 }

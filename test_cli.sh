@@ -33,4 +33,19 @@ err=$(./sha256 /no/such/sha256-c-missing "$tmp" 2>&1) && { echo "FAIL  missing f
 check "missing file still errors" sh -c "printf '%s\n' \"$err\" | grep -q 'No such file'"
 check "later file is still hashed" sh -c "printf '%s\n' \"$err\" | grep -q 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'"
 
+# A file whose name looks like an option is hashed only after --.
+dir=$(mktemp -d)
+trap 'rm -f "$tmp"; rm -rf "$dir"' EXIT
+printf 'abc' > "$dir/--help"
+out=$(./sha256 -- "$dir/--help")
+check "hash a file named --help after --" sh -c "printf '%s\n' \"$out\" | grep -q 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'"
+# Without --, --help must still be help, not a file.
+out=$(./sha256 --help "$dir/--help")
+check "help still wins before --" sh -c "printf '%s\n' \"$out\" | grep -q '^Usage: sha256'"
+check "help before -- does not hash" sh -c "! printf '%s\n' \"$out\" | grep -q 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'"
+
+# sha256 -- with no files reads stdin.
+out=$(printf 'abc' | ./sha256 --)
+check "dash-dash alone hashes stdin" sh -c "printf '%s\n' \"$out\" | grep -q 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'"
+
 exit $fail
