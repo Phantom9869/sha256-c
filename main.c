@@ -54,6 +54,13 @@ int main(int argc, char **argv)
             usage(stdout);
             return 0;
         }
+        /* A lone "-" is stdin, not an option. Anything else starting with
+           '-' would otherwise be treated as a filename and fail confusingly. */
+        if (argv[i][0] == '-' && argv[i][1] != '\0') {
+            fprintf(stderr, "sha256: unknown option: %s\n", argv[i]);
+            usage(stderr);
+            return 1;
+        }
     }
 
     if (argc < 2) {

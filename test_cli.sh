@@ -48,4 +48,16 @@ check "help before -- does not hash" sh -c "! printf '%s\n' \"$out\" | grep -q '
 out=$(printf 'abc' | ./sha256 --)
 check "dash-dash alone hashes stdin" sh -c "printf '%s\n' \"$out\" | grep -q 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'"
 
+# Unknown options are refused instead of being opened as filenames.
+err=$(./sha256 -v 2>&1) && { echo "FAIL  unknown option exit status was 0"; fail=1; } || true
+check "unknown option mentions the flag" sh -c "printf '%s\n' \"$err\" | grep -q 'unknown option: -v'"
+check "unknown option prints usage" sh -c "printf '%s\n' \"$err\" | grep -q '^Usage: sha256'"
+err=$(./sha256 --version 2>&1) && { echo "FAIL  --version exit status was 0"; fail=1; } || true
+check "long unknown option is refused" sh -c "printf '%s\n' \"$err\" | grep -q 'unknown option: --version'"
+
+# The same dash-prefixed name is hashed when it comes after --.
+printf 'abc' > "$dir/-v"
+out=$(./sha256 -- "$dir/-v")
+check "hash a file named -v after --" sh -c "printf '%s\n' \"$out\" | grep -q 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'"
+
 exit $fail
