@@ -9,11 +9,14 @@ make
 ./sha256 file.txt
 echo -n abc | ./sha256
 ./sha256 --help
+echo -n abc | ./sha256 --double
 ```
 
 Output matches the format of `sha256sum`. Directories are refused with a
 clear error instead of being treated as empty input. `-h` and `--help`
-print a short usage message.
+print a short usage message. `-d` or `--double` hashes the digest a
+second time (SHA-256d), the same way Bitcoin does for block hashes and
+transaction ids.
 
 ## Tests
 

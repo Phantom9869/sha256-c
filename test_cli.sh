@@ -60,4 +60,24 @@ printf 'abc' > "$dir/-v"
 out=$(./sha256 -- "$dir/-v")
 check "hash a file named -v after --" sh -c "printf '%s\n' \"$out\" | grep -q 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'"
 
+
+# -d / --double hashes the digest again (SHA-256d).
+out=$(printf 'abc' | ./sha256 -d)
+check "short double hashes stdin" sh -c "printf '%s\n' \"$out\" | grep -q '4f8b42c22dd3729b519ba6f68d2da7cc5b2d606d05daed5ad5128cc03e6c6358'"
+out=$(printf 'abc' | ./sha256 --double)
+check "long double hashes stdin" sh -c "printf '%s\n' \"$out\" | grep -q '4f8b42c22dd3729b519ba6f68d2da7cc5b2d606d05daed5ad5128cc03e6c6358'"
+printf 'abc' > "$dir/plain"
+out=$(./sha256 -d "$dir/plain")
+check "double hashes a file" sh -c "printf '%s\n' \"$out\" | grep -q '4f8b42c22dd3729b519ba6f68d2da7cc5b2d606d05daed5ad5128cc03e6c6358'"
+# Without -d the same input still prints the single SHA-256 digest.
+out=$(./sha256 "$dir/plain")
+check "without double still single-hashes" sh -c "printf '%s\n' \"$out\" | grep -q 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'"
+# -- still hashes a file named -d, rather than turning on double hashing.
+printf 'abc' > "$dir/-d"
+out=$(./sha256 -- "$dir/-d")
+check "hash a file named -d after --" sh -c "printf '%s\n' \"$out\" | grep -q 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'"
+# Help mentions the new flag.
+out=$(./sha256 --help)
+check "help mentions --double" sh -c "printf '%s\n' \"$out\" | grep -q -- '--double'"
+
 exit $fail

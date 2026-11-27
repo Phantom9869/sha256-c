@@ -7,12 +7,13 @@
 
 static void usage(FILE *fp)
 {
-    fprintf(fp, "Usage: sha256 [FILE...]\n");
+    fprintf(fp, "Usage: sha256 [-d|--double] [FILE...]\n");
     fprintf(fp, "Print the SHA-256 digest of each FILE, or of standard input\n");
     fprintf(fp, "if no files are given. A FILE of - means standard input.\n");
+    fprintf(fp, "  -d, --double  hash the digest again (SHA-256d, as used in Bitcoin)\n");
 }
 
-static int hash_stream(FILE *fp, uint8_t digest[SHA256_DIGEST_SIZE])
+static int hash_stream(FILE *fp, uint8_t digest[SHA256_DIGEST_SIZE], int use_double)
 {
     sha256_ctx ctx;
     uint8_t buf[8192];
@@ -24,6 +25,8 @@ static int hash_stream(FILE *fp, uint8_t digest[SHA256_DIGEST_SIZE])
     if (ferror(fp))
         return -1;
     sha256_final(&ctx, digest);
+    if (use_double)
+        sha256(digest, SHA256_DIGEST_SIZE, digest);
     return 0;
 }
 
@@ -40,10 +43,16 @@ static int is_help(const char *arg)
     return strcmp(arg, "-h") == 0 || strcmp(arg, "--help") == 0;
 }
 
+static int is_double(const char *arg)
+{
+    return strcmp(arg, "-d") == 0 || strcmp(arg, "--double") == 0;
+}
+
 int main(int argc, char **argv)
 {
     uint8_t digest[SHA256_DIGEST_SIZE];
     int status = 0;
+    int use_double = 0;
     int i;
 
     /* Options stop at --, so a file named --help can be hashed as: sha256 -- --help */
@@ -53,6 +62,10 @@ int main(int argc, char **argv)
         if (is_help(argv[i])) {
             usage(stdout);
             return 0;
+        }
+        if (is_double(argv[i])) {
+            use_double = 1;
+            continue;
         }
         /* A lone "-" is stdin, not an option. Anything else starting with
            '-' would otherwise be treated as a filename and fail confusingly. */
@@ -64,7 +77,7 @@ int main(int argc, char **argv)
     }
 
     if (argc < 2) {
-        if (hash_stream(stdin, digest) != 0) {
+        if (hash_stream(stdin, digest, use_double) != 0) {
             perror("stdin");
             return 1;
         }
@@ -84,6 +97,8 @@ int main(int argc, char **argv)
             end_opts = 1;
             continue;
         }
+        if (!end_opts && is_double(argv[i]))
+            continue;
         hashed++;
 
         if (strcmp(argv[i], "-") != 0) {
@@ -100,7 +115,7 @@ int main(int argc, char **argv)
             status = 1;
             continue;
         }
-        if (hash_stream(fp, digest) != 0) {
+        if (hash_stream(fp, digest, use_double) != 0) {
             fprintf(stderr, "sha256: %s: read error\n", argv[i]);
             status = 1;
         } else {
@@ -112,7 +127,7 @@ int main(int argc, char **argv)
 
         /* sha256 -- with no files after it reads standard input, like sha256sum. */
         if (hashed == 0) {
-            if (hash_stream(stdin, digest) != 0) {
+            if (hash_stream(stdin, digest, use_double) != 0) {
                 perror("stdin");
                 return 1;
             }
